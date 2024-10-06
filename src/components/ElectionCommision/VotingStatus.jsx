@@ -1,30 +1,43 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react';
+import { useWeb3Context } from "../../context/useWeb3Context";
+import {toast} from "react-hot-toast"
 
-const DisplayResult = () => {
-        
-    const {web3State} = useWeb3Context()
-    const {contractInstance} = web3State;
-    const [winner, setWinner] = useState("No winner declared")
-   
-    useEffect(()=>{
-        const getWinner = async()=>{
-          try{
-            const winningCandidateAddress = await contractInstance.winner();
-            if(winningCandidateAddress!='0x0000000000000000000000000000000000000000'){
-              setWinner(winningCandidate)
+const VotingStatus = () => {
+    const { web3State } = useWeb3Context();
+    const { contractInstance } = web3State;
+    const [votingStatus, setVotingStatus] = useState("");
+
+    // Enum mapping: Numeric values to string labels
+    const statusMap = {
+        0: "Not Started",
+        1: "In Progress",
+        2: "Ended"
+    };
+
+    useEffect(() => {
+        const getVotingStatus = async () => {
+            try {
+                const currentVotingStatus = await contractInstance.getVotingStatus();
+                console.log(currentVotingStatus);
+                // Map the numeric status to a meaningful label
+                setVotingStatus(statusMap[currentVotingStatus] || "Unknown Status");
+            } catch (error) {
+                toast.error("EError: Getting Voting Status")
+                console.error(error);
+                setVotingStatus("Error fetching status");
             }
-  
-          }catch(error){
-            console.error(error)
-          }
-        }
-        contractInstance && getWinner()
-      },[])
-  return (
-    <div>
-      <h1>Winner: {winner}</h1>
-    </div>
-  )
-}
+        };
 
-export default DisplayResult
+        if (contractInstance) {
+            getVotingStatus();
+        }
+    }, [contractInstance]);
+
+    return (
+        <div>
+            <h3>Status: {votingStatus}</h3>
+        </div>
+    );
+};
+
+export default VotingStatus;
